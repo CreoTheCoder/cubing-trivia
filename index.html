@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="module" src="https://esm.sh/cubejs@1.3.2"></script>
+    <!-- <script type="text/javascript" src="https://opentdb.com/api.php?amount=50&category=9&type=multiple"></script> -->
+    <title>Cubing Game</title>
+    <style>
+        body {
+            background-color: black;
+        }
+        button {
+            padding: 6%;
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdn.cubing.net/js/cubing/twisty" type="module" defer></script>
+    <script type="text/javascript">
+        function get(url) {
+            var xml = new XMLHttpRequest();
+            xml.open("GET", url, false);
+            xml.send(null);
+            return xml.responseText;
+        }
+        // function getQuestions(category, amount) {
+        //     return
+        // }
+        function reverse(move) {
+            if (move.length == 1) {
+                return move + "'";
+            }
+            else if (move[1] == '2') {
+                return move;
+            }
+            else {
+                return move[0];
+            }
+        }
+        // from: https://www.geeksforgeeks.org/how-to-shuffle-an-array-using-javascript/
+        function shuffleArray(array) {
+            for (var i = array.length - 1; i > 0; i--) {
+            
+                // Generate random number
+                var j = Math.floor(Math.random() * (i + 1));
+                            
+                var temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+            return array;
+        }
+        var xxx = 0
+        function filterQuestions(filters) {
+            console.log(full_questions.length)
+            for (var question in full_questions) {
+                xxx += 1
+                var index = questions.indexOf(full_questions[question]);
+                if ("category" in filters && !(filters["category"].includes(questions[index]["category"]))/* || "difficulty" in filters && questions[index]["difficulty"] != filters["difficulty"]*/) {
+                    console.log("hi", questions[index]["category"], filters["category"], full_questions[question]["difficulty"])
+                    // alert("hi")
+                    if (index !== -1) {
+                        console.log(questions[index], "to remove", questions.length)
+                        questions.splice(index, 1);
+                        console.log(questions[index], "next", questions.length)
+                    }
+                    console.log(questions)
+                }
+                else {
+                    console.log("don't remove", questions[index])
+                    // alert("hi")
+                }
+                // else {
+                //     console.log("h")
+                //     if (!(full_questions[question] in questions)) {
+                //         console.log(full_questions[question], questions)
+                //         questions.push(full_questions[question])
+                //     }
+                // }
+            }
+            console.log("x", questions, filters)
+        }
+        function getNextQuestion(questions, number) {
+            console.log(questions[number])
+            return questions[number]["question"];
+        }
+        function askQuestion(question) {
+            document.getElementById("question").innerHTML = question;
+        }
+        function getAnswers(questions, number) {
+            return [questions[number]["correct_answer"], questions[number]["incorrect_answers"]];
+        }
+        function setAnswers(answers) {
+            if (next.length == 1) {
+                var suffix = "";
+            }
+            else if (next[1] == "'") {
+                var suffix = "'";
+            }
+            else {
+                var suffix = "2";
+            }
+            var move_options = ["R" + suffix, "U" + suffix, "F" + suffix, "L" + suffix, "D" + suffix, "B" + suffix]
+            for (var i = 0; i < 2; i++) {
+                var removed_index = Math.floor(Math.random()*(6-i));
+                while (move_options[removed_index] == next) {
+                    removed_index = Math.floor(Math.random()*(6-i));
+                }
+                move_options.splice(removed_index, 1);
+            }
+            // if (!move_options.includes(next)) {
+            //     removed_index = Math.floor(Math.random()*4), 1;
+            //     move_options[removed_index] = next;
+            // }
+            // var correct_index = Math.floor(Math.random()*4)
+            window.correct_answer = answers[0];
+            var correct_index = move_options.indexOf(next)
+            answers[1].splice(correct_index, 0, answers[0])
+            answers = answers[1];
+            for (var move in move_options) {
+                document.getElementById(move).innerHTML = move_options[move] + ': ' + answers[move];
+                document.getElementById(move).setAttribute( "onClick", "javascript: doMove(`" + move_options[move] + "`)");
+            }
+            // console.log(move_options, 'doing answer stuff', answers, correct_index, moves);
+            if (answers[correct_index] == undefined) {
+                console.log(answers, correct_index, next, move_options)
+            }
+            // console.log('Correct answer:', answers[correct_index])
+        }
+    </script>
+    <script type="module">
+        import Cube from "https://esm.sh/cubejs@1.3.2"
+        Cube.initSolver();
+        var scramble = Cube.scramble();
+        document.getElementById("cube").attributes["alg"].value = scramble;
+        document.getElementById("cube").buttons.buttons["play-step-backwards"].click()
+        setTimeout(function () {
+            document.getElementById("cube").buttons.buttons["play-step"].click()
+            document.getElementById("cube").jumpToEnd();
+        }, 0)
+        window.cube = new Cube();
+        cube.move(scramble);
+        var moves_list = cube.solve().split(" ");
+        window.moves = moves_list;
+        // console.log(moves_list);
+        window.next = moves_list[0];
+        console.log('next1', next)
+        window.full_questions = shuffleArray(JSON.parse(get("trivia.json"))["results"]);
+        window.questions = full_questions.slice();
+        console.log(questions);
+        // console.log(questions.length)
+        filterQuestions({category: ["Science & Nature", "Science: Computers", "Science: Mathematics"], difficulty: "easy"})
+        // console.log(questions.length)
+        // window.questions = JSON.parse(get("https://opentdb.com/api.php?amount=50&category=9&difficulty=easy&type=multiple"))["results"];
+        // window.questions4 = JSON.parse(get("https://opentdb.com/api.php?amount=50&type=multiple&token=a8383d434ac4daf2f4de12bc6c7f7fd73f70625a0170b6e9aee0ca890fc34bb8"));
+        // window.set_number = 1;
+        window.question_number = 0;
+        // window.questions = JSON.parse(get("https://opentdb.com/api.php?amount=50&category=12&type=multiple"));
+        var question = getNextQuestion(questions, question_number);
+        askQuestion(question);
+        setAnswers(getAnswers(questions, question_number));
+        question_number += 1;
+        document.getElementById("moves_left").innerHTML = "Moves left: " + moves.length
+    </script>
+    <script>
+        function doMove(move) {
+            document.getElementById("cube").attributes["alg"].value += " " + move;
+            document.getElementById("cube").play();
+            cube.move(move);
+            // console.log(cube.asString());
+            if (move == moves[0]) {
+                moves = moves.slice(1);
+                // console.log('Correct!');
+                document.getElementById("correct").innerHTML = "Correct!";
+            }
+            else {
+                // console.log(moves, moves.length, 'hi')
+                // moves = cube.solve(moves.length + 1).split(" ");
+                // console.log('Incorrect.');
+                document.getElementById("correct").innerHTML = "Incorrect.";
+                // alert("Correct: " + correct_answer)
+                moves.unshift(reverse(move))
+                // moves = cube.solve().split(" ");
+            }
+            document.getElementById("moves_left").innerHTML = "Moves left: " + moves.length
+            if (moves.length == 0) {
+                console.log("Congrats! You solved the cube!")
+                document.getElementById("done").innerHTML = "Congrats! You solved the cube!";
+                document.getElementById("trivia").style.display = "none";
+                return
+            }
+            window.next = moves[0];
+            console.log('next2', next, moves)
+            // if (next.length == 1) {
+            //     document.getElementById("clockwise").style.display = "";
+            //     document.getElementById("anticlockwise").style.display = "none";
+            //     document.getElementById("double").style.display = "none";
+            // }
+            // else if (next[1] == "'") {
+            //     document.getElementById("clockwise").style.display = "none";
+            //     document.getElementById("anticlockwise").style.display = "";
+            //     document.getElementById("double").style.display = "none";
+            // }
+            // else {
+            //     document.getElementById("clockwise").style.display = "none";
+            //     document.getElementById("anticlockwise").style.display = "none";
+            //     document.getElementById("double").style.display = "";
+            // }
+            // console.log(moves.join(" "));
+            if (question_number == questions.length - 1) {
+                // if (set_number == 1) {
+                //     console.log("set 1 done", questions)
+                //     window.questions = questions2
+                //     console.log(questions)
+                // }
+                // else if (set_number == 2) {
+                //     console.log("set 2 done")
+                //     window.questions = questions3
+                //     console.log(questions)
+                // }
+                // else {
+                //     window.questions = questions4
+                // }
+                // set_number += 1
+                // question_number = 0;
+                alert("No more questions remaining!")
+            }
+            var question = getNextQuestion(questions, question_number);
+            // console.log(question, "hi")
+            askQuestion(question);
+            setAnswers(getAnswers(questions, question_number));
+            question_number += 1;
+        }
+    </script>
+    <twisty-player id="cube" alg="" background="none" control-panel="none" style="width: 500px; height: 600px"></twisty-player>
+    <br>
+    <h2 id="done" style="color:white; position: absolute; left: 48%; top: 35%; font-size: 40px; font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif"></h2>
+    <br>
+    <!-- <div id="clockwise">
+        <button onclick="doMove('R')">R</button>
+        <button onclick="doMove('U')">U</button>
+        <button onclick="doMove('F')">F</button>
+        <button onclick="doMove('L')">L</button>
+        <button onclick="doMove('D')">D</button>
+        <button onclick="doMove('B')">B</button>
+    </div> -->
+    <br><br>
+    <!-- <div id="anticlockwise">
+        <button onclick="doMove(`R'`)">R'</button>
+        <button onclick="doMove(`U'`)">U'</button>
+        <button onclick="doMove(`F'`)">F'</button>
+        <button onclick="doMove(`L'`)">L'</button>
+        <button onclick="doMove(`D'`)">D'</button>
+        <button onclick="doMove(`B'`)">B'</button>
+    </div> -->
+    <br><br>
+    <!-- <div id="double">
+        <button onclick="doMove('R2')">R2</button>
+        <button onclick="doMove('U2')">U2</button>
+        <button onclick="doMove('F2')">F2</button>
+        <button onclick="doMove('L2')">L2</button>
+        <button onclick="doMove('D2')">D2</button>
+        <button onclick="doMove('B2')">B2</button>
+    </div> -->
+    <div id="trivia" style="position: absolute; left: 35%; top: 2%; background-color: rgb(0, 0, 0, 0.1); width: 60%; height: 90%; text-align: center; padding: 30px; font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif">
+        <h2 id="question" style="color:white"></h2>
+        <br><br><br>
+        <button id="0"></button>
+        <button id="1"></button>
+        <br><br>
+        <button id="2"></button>
+        <button id="3"></button>
+        <h1 id="correct" style="color:white"></h1>
+        <h2 id="moves_left" style="color:white"></h2>
+        <!-- <button id = "R" onclick="doMove('R')">R: </button>
+        <button id = "U" onclick="doMove('U')">U: </button>
+        <button id = "F" onclick="doMove('F')">F: </button>
+        <br><br>
+        <button id = "L" onclick="doMove('L')">L: </button>
+        <button id = "D" onclick="doMove('D')">D: </button>
+        <button id = "B" onclick="doMove('B')">B: </button> -->
+    </div>
+</body>
+
+</html>
